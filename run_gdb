@@ -1,0 +1,2 @@
+# !/bin/bash
+riscv64-unknown-linux-gnu-gdb $1 -ex "target remote :1234"
