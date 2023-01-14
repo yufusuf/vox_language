@@ -4,7 +4,6 @@ from ast_tools import *
 
 class Parser(sly.Parser):
     tokens = lexer.Lexer.tokens
-    debugfile = 'parser_debug.out'
 
     # PROGRAM
     @_('V F S')
@@ -361,29 +360,3 @@ class Parser(sly.Parser):
     @_('')
     def empty(self, p):
         pass
-
-
-
-class GenerateAsm(ASTNodeVisitor):
-    def __init__(self):
-        super().__init__()
-        self.lexer = lexer.Lexer()
-        self.intermediate = []
-        self.places = set()
-        self.tmp_count = 0
-
-    def visit_Program(self, program: Program):
-        for var in program.var_decls:
-            self.visit(var)
-        # for fun in program.fun_decls:
-        #     self.visit(fun)
-        for stmt in program.statements:
-            self.visit(stmt)
-        
-    
-
-
-
-
-
-    
