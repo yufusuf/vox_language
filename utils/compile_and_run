@@ -1,0 +1,1 @@
+compile_file "lib_vox.c asm_vox.s -o executable" && run_file executable

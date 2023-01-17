@@ -11,23 +11,29 @@ class GenerateIntermediate(ASTNodeVisitor):
         self.intermediate = []
         self.places = set()
         self.tmp_count = 0
-        self.str_count = 0
-        self.const_strs = {}
+        self.label_count = 1
+        self.labels = []
 
     def generate_temp(self):
         tmp = f'tmp{self.tmp_count}'
         self.tmp_count+=1
         self.places.add(tmp)
         return tmp
-    def generate_str_label(self, value):
-        strr = f'str{self.str_count}'
-        self.str_count += 1
-        self.const_strs[strr] = value
-        return strr
-
-    def get_intermediate(self):
+    # def generate_str_label(self, value):
+    #     strr = f'str{self.str_count}'
+    #     self.str_count += 1
+    #     self.const_strs[strr] = value
+    #     return strr
+    def generate_label(self):
+        lbl = f'.L{self.label_count}'
+        self.label_count += 1
+        return lbl
+    def get_current_label(self):
+        return f'.L{self.label_count}'
+    def get_intermediate_code(self):
+        print(PrintVisitor().visit(self.ast))
         self.visit(self.ast)
-        return self.intermediate, self.places, self.const_strs
+        return self.intermediate, self.places #, self.const_strs
 
     def visit_Program(self, program: Program):
         for var in program.var_decls:
@@ -40,7 +46,7 @@ class GenerateIntermediate(ASTNodeVisitor):
 
     def visit_VarDecl(self, vardecl: VarDecl):
         if vardecl.initializer == None:
-            self.places.add(vardecl.identifier)
+            self.places.add(vardecl.identifier.name)
         elif type(vardecl.initializer) == list:
             self.places.add(vardecl.identifier)
             for elem in vardecl.initializer:
@@ -76,38 +82,75 @@ class GenerateIntermediate(ASTNodeVisitor):
         t1 = self.visit(auminus.right)
         return -int(t1)
     def visit_Block(self, block: Block):
-        return super().visit_Block(block)
-    def visit_Call(self, calll: Call):
-        return super().visit_Call(calll)
+        for stmt in block.statements:
+            self.visit(stmt)
     def visit_Comparison(self, comparison: Comparison):
-        return super().visit_Comparison(comparison)
+        t1 = self.visit(comparison.left)
+        t2 = self.visit(comparison.right)
+        self.intermediate.extend([('CMP',  t1, t2, comparison.op)])
+    def visit_IfElse(self, ifelse: IfElse):
+        if ifelse.else_branch == None:
+            lbl = self.generate_label()
+            self.visit(ifelse.condition)
+            self.intermediate.extend([('BRANCHEZ', lbl)])
+            self.visit(ifelse.if_branch)
+            self.intermediate.extend([('LABEL', lbl)])
+        else:
+            self.labels.append(self.generate_label())
+            lbl1 = self.generate_label()
+            lbl2 = self.generate_label()
+            self.visit(ifelse.condition)
+            self.intermediate.extend([('BRANCHEZ', lbl1)])
+            self.visit(ifelse.if_branch)
+            self.intermediate.extend([('GOTO', lbl2), ('LABEL', lbl1)])
+            self.visit(ifelse.else_branch)
+            self.intermediate.extend([('LABEL', lbl2)])
+        
+    def visit_LBinary(self, lbinary: LBinary):
+        out = self.generate_label()
+        self.visit(lbinary.left) 
+        self.intermediate.extend([(['BRANCHEZ','BRANCHNEZ'][lbinary.op == 'or'], out)])
+        self.visit(lbinary.right)
+        self.intermediate.extend([('LABEL', out)])
+
+    def visit_LLiteral(self, lliteral: LLiteral):
+        return lliteral.value
+    def visit_LNot(self, lnot: LNot):
+        #TODO
+        return  self.visit(lnot.right) 
+    def visit_LPrimary(self, lprimary: LPrimary):
+        #TODO
+        pass
+    def visit_WhileLoop(self, whileloop: WhileLoop):
+        check = self.generate_label()
+        out = self.generate_label()
+        self.intermediate.extend([('LABEL', check)])
+        self.visit(whileloop.condition)
+        self.intermediate.extend([('BRANCHEZ', out)])
+        self.visit(whileloop.body)
+        self.intermediate.extend([('GOTO', check)])
+        self.intermediate.extend([('LABEL', out)])
+        
+    def visit_Print(self, printt: Print):
+        t1 = self.visit(printt.expr)
+        if type(t1) == float:
+            t1 = int(t1)
+        self.intermediate.extend([('PARAM', t1), ('CALL', t1, '__vox_print__', 1)])
+    def visit_Return(self, returnn: Return):
+        return super().visit_Return(returnn)
+    def visit_SetVector(self, setvector: SetVector):
+        return super().visit_SetVector(setvector)
     def visit_ErrorStmt(self, errorstmt: ErrorStmt):
         return super().visit_ErrorStmt(errorstmt)
     def visit_ForLoop(self, forloop: ForLoop):
         return super().visit_ForLoop(forloop)
     def visit_FunDecl(self, fundecl: FunDecl):
         return super().visit_FunDecl(fundecl)
+    def visit_Call(self, calll: Call):
+        return super().visit_Call(calll)
     def visit_GetVector(self, getvector: GetVector):
         return super().visit_GetVector(getvector)
-    def visit_IfElse(self, ifelse: IfElse):
-        return super().visit_IfElse(ifelse)
-    def visit_LBinary(self, lbinary: LBinary):
-        return super().visit_LBinary(lbinary)
-    def visit_LLiteral(self, lliteral: LLiteral):
-        return super().visit_LLiteral(lliteral)
-    def visit_LNot(self, lnot: LNot):
-        return super().visit_LNot(lnot)
-    def visit_LPrimary(self, lprimary: LPrimary):
-        return super().visit_LPrimary(lprimary)
-    def visit_Print(self, printt: Print):
-        t1 = self.visit(printt.expr)
-        self.intermediate.extend([('PARAM', t1), ('CALL', t1, '__vox_print__', 1)])
-    def visit_Return(self, returnn: Return):
-        return super().visit_Return(returnn)
-    def visit_SetVector(self, setvector: SetVector):
-        return super().visit_SetVector(setvector)
-    def visit_WhileLoop(self, whileloop: WhileLoop):
-        return super().visit_WhileLoop(whileloop)
     def visit_SLiteral(self, sliteral: SLiteral):
-        strr = self.generate_str_label(sliteral.value)
-        return strr
+        pass
+        # strr = self.generate_str_label(sliteral.value)
+        # return strr
