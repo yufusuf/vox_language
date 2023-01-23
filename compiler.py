@@ -11,7 +11,7 @@ def il_ins_to_str(ins):
 
 with open('program.vox', 'r') as f:
     source = f.read()
-    il,f_il, places = GenerateIntermediate(source).get_intermediate_code()
+    il, f_il, places, strings = GenerateIntermediate(source).get_intermediate_code()
     for i in range(len(places)):
         stack_size = len(places[i].table)*8 + 16
         places[i].table = {places[i].table:addr for (places[i].table, addr) in zip(places[i].table, range(0, stack_size - 8, 8))}
@@ -34,12 +34,11 @@ with open('program.vox', 'r') as f:
                 asm_code += '#========================> ' + il_ins_to_str(ins) + '\n'
                 asm_code += asm_gen.il_to_asm(ins)
             f.write(asm_code)
-            asm_code = f'ld ra, {stack_size - 8}(sp)\nmv a0, zero\nret\n\t.data\n'
+            asm_code = f'ld ra, {stack_size - 8}(sp)\nmv a0, zero\nret\n\t.section .rodata\n'
             f.write(asm_code)
 
-            #TODO: ADD STRING LITERALS
-            # for s in strs:
-                # f.write(f'{s}: .ascii \"{strs[s]}\"\n')
+            for s in strings:
+                f.write(f'{s}: .string \"{strings[s]}\"\n')
 
         # print(asm_code) 
     else:

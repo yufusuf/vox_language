@@ -10,6 +10,6 @@ long __vox_add__(long a, long b);
 long __vox_mul__(long a, long b);
 long __vox_div__(long a, long b);
 long __vox_sub__(long a, long b);
-void __vox_print__(long a);
+void __vox_print__(long a, long b);
 void __vox_puts__(long str);
 #endif

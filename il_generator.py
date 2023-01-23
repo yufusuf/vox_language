@@ -39,16 +39,21 @@ class GenerateIntermediate(ASTNodeVisitor):
         self.env = Env(None)
         self.envs = [self.env]
 
+        self.const_strs = {}
+        self.str_count = 0
     def generate_temp(self):
         tmp = f'tmp{self.tmp_count}'
         self.tmp_count+=1
         self.env.add(tmp)
         return tmp
-    # def generate_str_label(self, value):
-    #     strr = f'str{self.str_count}'
-    #     self.str_count += 1
-    #     self.const_strs[strr] = value
-    #     return strr
+    def generate_str_label(self, value):
+        for s in self.const_strs:
+            if self.const_strs[s] == value:
+                return s
+        strr = f'$str{self.str_count}'
+        self.str_count += 1
+        self.const_strs[strr] = value
+        return strr
     def generate_label(self):
         lbl = f'.L{self.label_count}'
         self.label_count += 1
@@ -58,7 +63,7 @@ class GenerateIntermediate(ASTNodeVisitor):
     def get_intermediate_code(self):
         print(PrintVisitor().visit(self.ast))
         self.visit(self.ast)
-        return self.intermediate, self.funs,self.envs #, self.const_strs
+        return self.intermediate, self.funs,self.envs , self.const_strs
 
     def visit_Program(self, program: Program):
         for var in program.var_decls:
@@ -137,7 +142,6 @@ class GenerateIntermediate(ASTNodeVisitor):
             self.visit(ifelse.if_branch)
             self.intermediate.extend([('LABEL', lbl)])
         else:
-            self.labels.append(self.generate_label())
             lbl1 = self.generate_label()
             lbl2 = self.generate_label()
             self.visit(ifelse.condition)
@@ -161,7 +165,6 @@ class GenerateIntermediate(ASTNodeVisitor):
         self.intermediate.extend([('NOT', t1)])
         return t1
     def visit_LPrimary(self, lprimary: LPrimary):
-        #TODO
         pass
     def visit_WhileLoop(self, whileloop: WhileLoop):
         check = self.generate_label()
@@ -175,9 +178,10 @@ class GenerateIntermediate(ASTNodeVisitor):
         
     def visit_Print(self, printt: Print):
         t1 = self.visit(printt.expr)
-        if type(t1) == float:
-            t1 = int(t1)
-        self.intermediate.extend([('PARAM', t1), ('CALL', None, '__vox_print__', 1)])
+        if type(t1) == str and t1[0] == '$':
+            self.intermediate.extend([('PARAM', t1), ('PARAM', 0) ,('CALL', None, '__vox_print__', 2)])
+        else:
+            self.intermediate.extend([('PARAM', t1), ('PARAM', 1), ('CALL', None, '__vox_print__', 2)])
     def visit_Return(self, returnn: Return):
         t1 = self.visit(returnn.expr)
 
@@ -187,7 +191,16 @@ class GenerateIntermediate(ASTNodeVisitor):
     def visit_ErrorStmt(self, errorstmt: ErrorStmt):
         return super().visit_ErrorStmt(errorstmt)
     def visit_ForLoop(self, forloop: ForLoop):
-        return super().visit_ForLoop(forloop)
+        self.visit(forloop.initializer)
+        check = self.generate_label()
+        out = self.generate_label()
+        self.intermediate.extend([('LABEL', check)])
+        self.visit(forloop.condition)
+        self.intermediate.extend([('BRANCHEZ', out)])
+        self.visit(forloop.body)
+        self.visit(forloop.increment)
+        self.intermediate.extend([('GOTO', check)])
+        self.intermediate.extend([('LABEL', out)])
     def visit_FunDecl(self, fundecl: FunDecl):
         self.env = Env(self.env, True)
         self.envs.append(self.env)
@@ -212,6 +225,5 @@ class GenerateIntermediate(ASTNodeVisitor):
     def visit_GetVector(self, getvector: GetVector):
         return super().visit_GetVector(getvector)
     def visit_SLiteral(self, sliteral: SLiteral):
-        pass
-        # strr = self.generate_str_label(sliteral.value)
-        # return strr
+        strr = self.generate_str_label(sliteral.value)
+        return strr

@@ -7,7 +7,6 @@ class GenerateAsm:
         self.current_e:Env = self.envs[0]
         self.offsets = [0]
         self.sp_offset = 0
-        self.last_offset = 0;
     def value_addr(self, place):
         if self.current_e.member(place):
             return str(self.current_e.table[place])
@@ -47,7 +46,10 @@ class GenerateAsm:
             return self.RET_to_asm(instr)
         if inst_type == 'FUN_EXIT':
             return self.FUNEXIT_to_asm(instr)
-        #TODO add neg and not
+        if inst_type == 'NEG':
+            return self.NEG_to_asm(instr)
+        if inst_type == 'NOT':
+            return self.NOT_to_asm(instr)
         else:
             return f'wtf is {inst_type}' 
     def PARAM_to_asm(self, ins):
@@ -57,6 +59,10 @@ class GenerateAsm:
             exit()
         if type(ins[1]) == int:
             asm.extend([f'li a{str(self.arg_reg_count)}, {ins[1]}'])
+        elif ins[1] == None:
+            asm.extend([f'mv a{str(self.arg_reg_count)}, t4'])
+        elif ins[1][0] == '$':
+            asm.extend([f'la a{str(self.arg_reg_count)}, {ins[1]}'])
         else:
             value_addr = self.value_addr(ins[1])
             asm.extend([f'ld a{str(self.arg_reg_count)}, {value_addr}(sp)'])
@@ -65,10 +71,9 @@ class GenerateAsm:
         return '\n'.join(asm) + '\n'
     def CALL_to_asm(self, ins):
         asm = [f'call {ins[2]} ']
-        if type(ins[1]) != int and ins[1] != None:
+        if type(ins[1]) != int and ins[1] != None and ins[1][0] != '$':
             value_addr = self.value_addr(ins[1])
             asm.extend([f'sd a0, {value_addr}(sp)'])
-
         self.arg_reg_count = 0 # reset arg reg
         return '\n'.join(asm) + '\n'
     def COPY_to_asm(self, ins):
@@ -84,9 +89,6 @@ class GenerateAsm:
                     f'sd t0, {value_addr_to}(sp)']
         elif ins[2] == None:
             asm = [f'sd t4, {value_addr_to}(sp)'] 
-        else:
-            # handle casting here assignments for like var a = (2 > 3);
-            pass
         return '\n'.join(asm) + '\n'
     def BRANCH_to_asm(self, ins):
         asm = []
@@ -137,7 +139,6 @@ class GenerateAsm:
         self.current_e = self.envs[self.env_id]
         var_count = len(self.current_e.table)
 
-        self.last_offset = (var_count + 2) * 8
         self.sp_offset += (var_count + 2) * 8
         ra_offset = (var_count + 1) * 8
         t4_offset = var_count * 8
@@ -191,4 +192,18 @@ class GenerateAsm:
     def FUNEXIT_to_asm(self, ins):
         self.current_e = self.envs[0]
         return ''
-
+    def NEG_to_asm(self, ins):
+        value_addr = self.value_addr(ins[1])
+        asm = [ 
+                f'ld t0, {value_addr}(sp)',
+                f'xor t0, t0, -1',
+                f'addi t0, t0, 1',
+                f'sd t0, {value_addr}(sp)'
+                ]
+        return '\n'.join(asm)+'\n'
+    def NOT_to_asm(self, ins):
+        # value_addr = self.value_addr(ins[1])
+        asm = [
+            f'xor t4, t4, 1'
+        ]
+        return '\n'.join(asm)+'\n'

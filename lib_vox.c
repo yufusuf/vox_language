@@ -25,12 +25,19 @@ long __vox_div__(long a, long b)
     }
     return a/b;
 }
-void __vox_print__(long a)
+void __vox_print__(long a, long type)
 {
-    printf("%ld\n", a);
+    if (type == 0)
+    {
+        printf("%s\n", (char*)a);
+    }
+    else {
+    
+        printf("%ld\n", a);
+    }
 }
 void __vox_puts__(long str)
 {
-    char * p = (char*) str;
+    char * p = (char*)(&str);
     puts(p);
 }

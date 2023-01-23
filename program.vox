@@ -42,6 +42,7 @@ fun add (a, b)
 {
     var result;
     result = a + b;
+    print "ADDING";
     if result > 5  
     {
         var i = 40;
@@ -49,7 +50,7 @@ fun add (a, b)
         while j >= 0 
         {
             var a = -100;
-            print a * j;
+            //print a * j;
             j = j - 10; 
             if j == 10
             {
@@ -58,18 +59,35 @@ fun add (a, b)
                 {
                     print j;
                     j = j - 1;
-                    print otuzbir;
+                    //print otuzbir;
                 }
             }
         }
     }
     if 4 < 5
     {
+        var a = 21;
        if 6 < 7
        {
-           if 8 < 20
+        var b = 32;
+           if !!(8 < 20)
            {
+                print "b: ";
+                print b;
+                print "a: ";
+                print a;
                return result + 10000;
+           }
+           else
+           {
+                
+                var i = 500;
+                var a = 400;
+                var j = 300;
+                print "deepest nest";
+                print a;
+                print b; 
+                return -(i * j * a);
            }
        }
     }   
@@ -100,6 +118,12 @@ j = add(10, 20);
 print j;
 //j = cort(99);
 //print j;
-//print large(1,2,3,4,5,6,7);
-//print fibo(20);
-//print fibo(7);
+print "fibos and larges";
+print large(1,2,3,4,5,6,7);
+print fibo(20);
+print fibo(7);
+print fibo(fibo(6));
+if( fibo(fibo(6)) > 3 and !(3 > 4))
+{
+    print 4;
+}
