@@ -158,7 +158,12 @@ class GenerateIntermediate(ASTNodeVisitor):
         self.intermediate.extend([('LABEL', out)])
 
     def visit_LLiteral(self, lliteral: LLiteral):
-        return lliteral.value
+        if lliteral.value:
+            res = 1;
+        else:
+            res = 0;
+        self.intermediate.extend([('CMP', res, 0, '!=')])
+        return res
     def visit_LNot(self, lnot: LNot):
         t1 = self.visit(lnot.right)
         self.intermediate.extend([('NOT', t1)])
