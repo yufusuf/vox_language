@@ -61,7 +61,6 @@ class GenerateIntermediate(ASTNodeVisitor):
     def get_current_label(self):
         return f'.L{self.label_count}'
     def get_intermediate_code(self):
-        print(PrintVisitor().visit(self.ast))
         self.visit(self.ast)
         return self.intermediate, self.funs,self.envs , self.const_strs
 

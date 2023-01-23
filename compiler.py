@@ -20,8 +20,6 @@ with open(args.source_file, 'r') as f:
     for i in range(len(places)):
         stack_size = len(places[i].table)*8 + 16
         places[i].table = {places[i].table:addr for (places[i].table, addr) in zip(places[i].table, range(0, stack_size - 8, 8))}
-    for i in range(len(places)):
-        print(i, places[i].table)
     with open('asm_vox.s', 'w') as f:
         stack_size = len(places[0].table)*8 + 8
         asm_code = f' #include "lib_vox.h"\n\n\t.global main \n\t.text \n\t.align 2\n' 

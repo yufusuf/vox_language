@@ -21,3 +21,4 @@ almost everything other than that should work
 - to compile: run compile.py with "file_name" it should generate an assembly file called "asm_vox.s"
 - --show_il argument shows the il generated on console 
 - i put 2 sample programs which shows many of the thins i have implemented
+- using commands can be helpful, compile_and_run compiles the assembly then runs it
