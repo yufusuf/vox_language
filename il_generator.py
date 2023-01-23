@@ -2,7 +2,29 @@ from ast_tools import *
 from parser_1 import *
 from lexer import *
 
+class Env:
+    def __init__(self, prev = None, isfunction = False):
+        self.prev = prev
+        self.table = set()
+        self.fvars =[]
+        self.isfunction = isfunction
+    def member(self, elem):
+        return elem in self.table
+    
+    def recursive_member(self, elem):
+        if elem in self.table:
+            return True
+        elif self.prev is not None:
+            return self.prev.recursive_member(elem)
 
+        return False
+    
+    def add(self, elem):
+        self.table.add(elem)
+    def add_fvar(self, var):
+        self.fvars.append(var)
+    def size(self):
+        return len(self.table)*8 + 16
 op_names = {"+": "add", "*": "mul", "/": "div", "-": "sub"}
 class GenerateIntermediate(ASTNodeVisitor):
     def __init__(self, source):
@@ -12,12 +34,15 @@ class GenerateIntermediate(ASTNodeVisitor):
         self.places = set()
         self.tmp_count = 0
         self.label_count = 1
-        self.labels = []
+        self.funs =[]
+
+        self.env = Env(None)
+        self.envs = [self.env]
 
     def generate_temp(self):
         tmp = f'tmp{self.tmp_count}'
         self.tmp_count+=1
-        self.places.add(tmp)
+        self.env.add(tmp)
         return tmp
     # def generate_str_label(self, value):
     #     strr = f'str{self.str_count}'
@@ -33,31 +58,39 @@ class GenerateIntermediate(ASTNodeVisitor):
     def get_intermediate_code(self):
         print(PrintVisitor().visit(self.ast))
         self.visit(self.ast)
-        return self.intermediate, self.places #, self.const_strs
+        return self.intermediate, self.funs,self.envs #, self.const_strs
 
     def visit_Program(self, program: Program):
         for var in program.var_decls:
             self.visit(var)
-        # for fun in program.fun_decls:
-        #     self.visit(fun)
+        temp = self.intermediate
+        self.intermediate = []
+        for fun in program.fun_decls:
+            self.visit(fun)
+        self.funs = self.intermediate
+        self.intermediate = temp
         for stmt in program.statements:
             self.visit(stmt)
 
-
+    def check_undeclared(self, name):
+        return self.env.recursive_member(name)
     def visit_VarDecl(self, vardecl: VarDecl):
-        if vardecl.initializer == None:
-            self.places.add(vardecl.identifier.name)
-        elif type(vardecl.initializer) == list:
-            self.places.add(vardecl.identifier)
-            for elem in vardecl.initializer:
-                self.visit(elem)
-        else:
-            self.places.add(vardecl.identifier.name)
-            tmp = self.visit(vardecl.initializer)
-            self.intermediate.extend([('COPY', vardecl.identifier.name, tmp)])
+        self.env.add(vardecl.identifier.name)
+        if vardecl.initializer != None:
+            if type(vardecl.initializer) == list:
+                for elem in vardecl.initializer:
+                    self.visit(elem)
+            else:
+                tmp = self.visit(vardecl.initializer)
+                self.intermediate.extend([('COPY', vardecl.identifier.name, tmp)])
 
+    def visit_nonscoped(self, body):
+        for decl in body.var_decls:
+            self.visit(decl)
+        for stmt in body.statements:
+            self.visit(stmt)
     def visit_Variable(self, variable: Variable):
-        if variable.identifier.name not in self.places:
+        if self.check_undeclared(variable.identifier.name) == False and variable.identifier.name not in self.env.fvars:
             print(f"Error, undeclared variable {variable.identifier}")
             exit()
         return variable.identifier.name
@@ -80,10 +113,18 @@ class GenerateIntermediate(ASTNodeVisitor):
 
     def visit_AUMinus(self, auminus: AUMinus):
         t1 = self.visit(auminus.right)
-        return -int(t1)
+        if type(t1) == int:
+            return -int(t1)
+        else:
+            self.intermediate.extend([('NEG', t1)])
+            return t1;
     def visit_Block(self, block: Block):
-        for stmt in block.statements:
-            self.visit(stmt)
+        self.env = Env(self.env)
+        self.envs.append(self.env)
+        self.intermediate.extend([('ENV', self.envs.index(self.env))])
+        self.visit_nonscoped(block)
+        self.intermediate.extend([('ENV_EXIT', self.envs.index(self.env))])
+        self.env = self.env.prev
     def visit_Comparison(self, comparison: Comparison):
         t1 = self.visit(comparison.left)
         t2 = self.visit(comparison.right)
@@ -116,8 +157,9 @@ class GenerateIntermediate(ASTNodeVisitor):
     def visit_LLiteral(self, lliteral: LLiteral):
         return lliteral.value
     def visit_LNot(self, lnot: LNot):
-        #TODO
-        return  self.visit(lnot.right) 
+        t1 = self.visit(lnot.right)
+        self.intermediate.extend([('NOT', t1)])
+        return t1
     def visit_LPrimary(self, lprimary: LPrimary):
         #TODO
         pass
@@ -135,9 +177,11 @@ class GenerateIntermediate(ASTNodeVisitor):
         t1 = self.visit(printt.expr)
         if type(t1) == float:
             t1 = int(t1)
-        self.intermediate.extend([('PARAM', t1), ('CALL', t1, '__vox_print__', 1)])
+        self.intermediate.extend([('PARAM', t1), ('CALL', None, '__vox_print__', 1)])
     def visit_Return(self, returnn: Return):
-        return super().visit_Return(returnn)
+        t1 = self.visit(returnn.expr)
+
+        self.intermediate.extend([('RETURN', t1)])
     def visit_SetVector(self, setvector: SetVector):
         return super().visit_SetVector(setvector)
     def visit_ErrorStmt(self, errorstmt: ErrorStmt):
@@ -145,9 +189,26 @@ class GenerateIntermediate(ASTNodeVisitor):
     def visit_ForLoop(self, forloop: ForLoop):
         return super().visit_ForLoop(forloop)
     def visit_FunDecl(self, fundecl: FunDecl):
-        return super().visit_FunDecl(fundecl)
+        self.env = Env(self.env, True)
+        self.envs.append(self.env)
+        self.intermediate.extend([('LABEL', fundecl.identifier.name),('FUN_ENTRY', self.envs.index(self.env))])
+        for v in fundecl.params:
+            self.env.add(v.name)
+            self.env.add_fvar(v.name)
+        self.visit_nonscoped(fundecl.body)
+        self.intermediate.extend([('FUN_EXIT', self.envs.index(self.env))]) 
+        self.env = self.env.prev
+
     def visit_Call(self, calll: Call):
-        return super().visit_Call(calll)
+        places = []
+        for a in calll.arguments:
+            t1 = self.visit(a)
+            places.append(t1)
+        for p in places:
+            self.intermediate.extend([('PARAM',p)])
+        place = self.generate_temp()
+        self.intermediate.extend([('CALL', place, calll.callee.name, len(calll.arguments))])
+        return place
     def visit_GetVector(self, getvector: GetVector):
         return super().visit_GetVector(getvector)
     def visit_SLiteral(self, sliteral: SLiteral):

@@ -1,10 +1,105 @@
-var i = 10;
-while i >= 3
+//var i = 5;
+//var j;
+//fun add(a,b)
+//{
+//    var result;
+//    result = a + b;
+//    if result > 5
+//    {
+//        var a = 4;
+//        result = result + a;
+//    }
+//    return result;
+//}
+//while (i >= 0)
+//{
+//    var a = 30;
+//    var b;
+//    var c;
+//    j = i;
+//    while j >= 0
+//    {
+//        var a;
+//        var b;
+//        print i * j;
+//        j = j - 1;
+//    }
+//    if a > 20
+//    {
+//        while a >= 5
+//        {
+//            var b = 3;
+//            a = a - b;
+//        }
+//    }
+//    i = i - 1;
+//}
+
+var i = 4;
+var j = 6;
+var otuzbir = 31;
+fun add (a, b)
 {
-    //if i*3 > 5
-    //    print 3;
-    //else
-    //    print 4;
-    print i;
-    i = i - 1;
+    var result;
+    result = a + b;
+    if result > 5  
+    {
+        var i = 40;
+        var j = 70;
+        while j >= 0 
+        {
+            var a = -100;
+            print a * j;
+            j = j - 10; 
+            if j == 10
+            {
+                var j = 5;
+                while j >=0
+                {
+                    print j;
+                    j = j - 1;
+                    print otuzbir;
+                }
+            }
+        }
+    }
+    if 4 < 5
+    {
+       if 6 < 7
+       {
+           if 8 < 20
+           {
+               return result + 10000;
+           }
+       }
+    }   
+    return result;
 }
+fun cort(a)
+{
+    print i;
+    print j;
+    return a;
+}
+fun large(a,b,c,d,e,f,g,h)
+{
+    return a + b + c + d + e + f + g;
+}
+fun fibo(a)
+{
+    if a == 0
+        return 0;
+    
+    if a == 1 or a == 2
+    {
+        return 1;
+    }
+    return fibo(a-2)+ fibo(a - 1);
+}
+j = add(10, 20);
+print j;
+//j = cort(99);
+//print j;
+//print large(1,2,3,4,5,6,7);
+//print fibo(20);
+//print fibo(7);
