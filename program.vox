@@ -37,20 +37,27 @@
 
 var i = 4;
 var j = 6;
-var otuzbir = 31;
+fun give_zero()
+{
+    return 0;
+}
 fun add (a, b)
 {
     var result;
+    var h = 0;
+    var g = 0;
+    var i = 0;
     result = a + b;
     print "ADDING";
-    if result > 5  
+    if !#give_zero() or result < 5 and !#h and !#g and !#i 
     {
         var i = 40;
         var j = 70;
+        print "inside of first if";
         while j >= 0 
         {
             var a = -100;
-            //print a * j;
+            print a * j;
             j = j - 10; 
             if j == 10
             {
@@ -59,13 +66,16 @@ fun add (a, b)
                 {
                     print j;
                     j = j - 1;
-                    //print otuzbir;
+                    print "EREN CIKIYORUM";
+
+                    return j;
                 }
             }
         }
     }
-    if 4 < 5
+    if 4 < 5 or #a
     {
+
         var a = 21;
        if 6 < 7
        {
@@ -76,6 +86,15 @@ fun add (a, b)
                 print b;
                 print "a: ";
                 print a;
+                for(a = 0; a < 10; a = a + 1)
+                {
+                    print a;
+                    if a == 7
+                    {
+                        var result = 989898;
+                        return result;
+                    }
+                }
                return result + 10000;
            }
            else
@@ -105,7 +124,7 @@ fun large(a,b,c,d,e,f,g,h)
 }
 fun fibo(a)
 {
-    if a == 0
+    if !#a
         return 0;
     
     if a == 1 or a == 2
@@ -115,6 +134,7 @@ fun fibo(a)
     return fibo(a-2)+ fibo(a - 1);
 }
 j = add(10, 20);
+print "return value add(10,20)";
 print j;
 //j = cort(99);
 //print j;
@@ -127,3 +147,5 @@ if( fibo(fibo(6)) > 3 and !(3 > 4))
 {
     print 4;
 }
+print "EREN FIBO";
+print fibo(30);

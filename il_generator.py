@@ -165,7 +165,8 @@ class GenerateIntermediate(ASTNodeVisitor):
         self.intermediate.extend([('NOT', t1)])
         return t1
     def visit_LPrimary(self, lprimary: LPrimary):
-        pass
+        t1 = self.visit(lprimary.primary)
+        self.intermediate.extend([('CMP', t1, 0, '!=')])
     def visit_WhileLoop(self, whileloop: WhileLoop):
         check = self.generate_label()
         out = self.generate_label()

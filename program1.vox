@@ -14,8 +14,12 @@
 //        print 42;
 //    }
 //}
-print "HELLO";
-print "ASD";
-print "HELLO";
-print "ZOTTIRIBOK";
-print "HELLO";
+//print "HELLO";
+//print "ASD";
+//print "HELLO";
+//print "ZOTTIRIBOK";
+//print "HELLO";
+var b = 5;
+var c = 0;
+var a = (#b or #c) and #c; 
+print a;
