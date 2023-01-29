@@ -19,7 +19,15 @@
 //print "HELLO";
 //print "ZOTTIRIBOK";
 //print "HELLO";
-var b = 5;
-var c = 0;
-var a = (#b or #c) and #c; 
-print a;
+var b = 72;
+var c = 4;
+var a = (#do(b,c) or #c) and #c; 
+fun do(a,b)
+{
+    return a/ b;
+}
+fun cukka(a,b)
+{
+    return a * b;
+}
+print do(cukka(cukka(c, 2), 12),2);

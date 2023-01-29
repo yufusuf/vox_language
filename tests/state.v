@@ -1,0 +1,15 @@
+var a;
+var b;
+var c;
+//print a;
+a = 5;
+print a;
+b = 10;
+print b;
+a = a+b;
+print a;
+c = b;
+print c;
+c = c+1;
+print b;
+print c;

@@ -133,7 +133,7 @@ fun fibo(a)
     }
     return fibo(a-2)+ fibo(a - 1);
 }
-j = add(10, 20);
+j = add(i, i);
 print "return value add(10,20)";
 print j;
 //j = cort(99);
